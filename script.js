@@ -11,7 +11,7 @@ let tickets = [
   },
   {
     id: "ticket-2",
-    title: "Problem z logowaniem",
+    title: "Problem z logowaniem 2",
     status: "doing",
     priority: "normal"
   }
@@ -113,82 +113,92 @@ function showMessage(text, isError = false) {
   message.classList.toggle("error", isError);
 }
 
-// 5. RENDEROWANIE
-function renderTickets() {
-  // Czyścimy tylko widok, nigdy tablicę tickets.
-  ticketList.replaceChildren();
+// 5. STATUS PO ID
+// 6. FILTR I LICZNIK
 
-  const filter = filterSelect.value;
+// Tworzenie pojedynczego zgłoszenia
+function createTicketRow(ticket) {
 
-  const visibleTickets = tickets.filter(ticket => {
-    return filter === "all" || ticket.status === filter;
+  const li = document.createElement("li");
+
+  const title = document.createElement("strong");
+  title.textContent = ticket.title;
+
+  const details = document.createElement("p");
+  details.textContent = `ID: ${ticket.id} | Priorytet: ${priorityLabel(ticket.priority)}`;
+
+  const label = document.createElement("label");
+  label.textContent = `ID: ${ticket.id} | Status zgłoszenia: `;
+
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", `Status zgłoszenia ${ticket.id}`);
+
+  STATUSES.forEach(status => {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = statusLabel(status);
+    select.append(option);
   });
 
-  visibleTickets.forEach(ticket => {
-    const li = document.createElement("li");
-    li.className = `ticket priority-${ticket.priority}`;
+  select.value = ticket.status;
 
-    const heading = document.createElement("h3");
-    heading.textContent = ticket.title;
+  // Zmiana statusu konkretnego zgłoszenia po ID
+  select.addEventListener("change", () => {
 
-    const details = document.createElement("p");
-    details.textContent =
-      `ID: ${ticket.id} | Status: ${statusLabel(ticket.status)} | ` +
-      `Priorytet: ${priorityLabel(ticket.priority)}`;
+    const result = changeStatus(ticket.id, select.value);
 
-    const actions = document.createElement("div");
-    actions.className = "ticket-actions";
+    if (!result.ok) {
+      showMessage(result.error, true);
+      return;
+    }
 
-    const statusSelect = document.createElement("select");
-    statusSelect.setAttribute(
-      "aria-label",
-      `Zmień status zgłoszenia ${ticket.id}`
-    );
+    render();
 
-    STATUSES.forEach(status => {
-      const option = document.createElement("option");
-      option.value = status;
-      option.textContent = statusLabel(status);
-      option.selected = status === ticket.status;
-      statusSelect.append(option);
-    });
+    filterSelect.focus();
 
-    statusSelect.addEventListener("change", () => {
-      const result = changeStatus(ticket.id, statusSelect.value);
+    showMessage("Status zgłoszenia został zmieniony.");
 
-      if (result.ok) {
-        showMessage(`Zmieniono status zgłoszenia ${ticket.id}.`);
-        renderTickets();
-      } else {
-        showMessage(result.error, true);
-      }
-    });
-
-    const idButton = document.createElement("button");
-    idButton.type = "button";
-    idButton.textContent = "Kopiuj ID";
-    idButton.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(ticket.id);
-        showMessage(`Skopiowano ID: ${ticket.id}`);
-      } catch {
-        showMessage(`ID zgłoszenia: ${ticket.id}`);
-      }
-    });
-
-    actions.append(statusSelect, idButton);
-    li.append(heading, details, actions);
-    ticketList.append(li);
   });
 
-  counter.textContent =
-    `Widoczne: ${visibleTickets.length} / Wszystkie: ${tickets.length}`;
+  li.append(title, details, label, select);
 
-  emptyMessage.hidden = visibleTickets.length !== 0;
+  return li;
 }
 
-// 6. FORMULARZ
+
+// Wyświetlanie zgłoszeń
+function render() {
+
+  const selectedStatus = filterSelect.value;
+
+  // Filtr tworzy tylko widok, nie usuwa danych
+  const visible = tickets.filter(ticket => {
+    return selectedStatus === "all" || ticket.status === selectedStatus;
+  });
+
+  ticketList.replaceChildren();
+
+  visible.forEach(ticket => {
+    const row = createTicketRow(ticket);
+    ticketList.append(row);
+  });
+
+  // Licznik zgłoszeń
+  counter.textContent = `Widoczne: ${visible.length} / Wszystkie: ${tickets.length}`;
+
+  // Komunikat pustego wyniku
+  emptyMessage.hidden = visible.length !== 0;
+}
+
+
+// Obsługa filtra
+filterSelect.addEventListener("change", render);
+
+
+// 7. KLAWIATURA I INTEGRACJA
+
 form.addEventListener("submit", event => {
+
   event.preventDefault();
 
   const title = titleInput.value;
@@ -198,20 +208,20 @@ form.addEventListener("submit", event => {
 
   if (!result.ok) {
     showMessage(result.error, true);
+    titleInput.focus();
     return;
   }
 
-  // Czyścimy pole tylko po udanym dodaniu.
-  form.reset();
-  prioritySelect.value = "normal";
+  titleInput.value = "";
 
-  showMessage(`Dodano zgłoszenie: ${result.ticket.id}`);
-  renderTickets();
+  showMessage(`Dodano zgłoszenie: ${result.ticket.title}`);
+
+  render();
+
   titleInput.focus();
+
 });
 
-// 7. FILTR — ZMIENIA WYŁĄCZNIE WIDOK
-filterSelect.addEventListener("change", renderTickets);
 
-// 8. START
-renderTickets();
+// Pierwsze wyświetlenie
+render();
