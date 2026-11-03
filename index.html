@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Helpdesk — C03_DOM</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Helpdesk</h1>
+      <p>Panel obsługi zgłoszeń</p>
+    </header>
+
+    <section class="panel">
+      <h2>Dodaj zgłoszenie</h2>
+
+      <form id="ticket-form">
+        <label for="title">Tytuł zgłoszenia</label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          minlength="3"
+          maxlength="80"
+          placeholder="Wpisz tytuł..."
+          required
+        >
+
+        <label for="priority">Priorytet</label>
+        <select id="priority" name="priority">
+          <option value="low">Niski</option>
+          <option value="normal" selected>Normalny</option>
+          <option value="high">Wysoki</option>
+        </select>
+
+        <button type="submit">Dodaj zgłoszenie</button>
+      </form>
+
+      <p id="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <div class="list-header">
+        <h2>Lista zgłoszeń</h2>
+        <span id="counter">Widoczne: 0 / Wszystkie: 0</span>
+      </div>
+
+      <label for="filter">Filtr statusu</label>
+      <select id="filter">
+        <option value="all">Wszystkie</option>
+        <option value="new">Nowe</option>
+        <option value="doing">W trakcie</option>
+        <option value="done">Zakończone</option>
+      </select>
+
+      <ul id="ticket-list"></ul>
+
+      <p id="empty-message" hidden>
+        Brak zgłoszeń pasujących do filtra.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
